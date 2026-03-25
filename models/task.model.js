@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const taskSchema = new mongoose.Schema({
     title: String,
     status: String,
@@ -13,5 +12,4 @@ const taskSchema = new mongoose.Schema({
 
 // ✅ Compound Index
 taskSchema.index({ status: 1, priority: 1 });
-
 module.exports = mongoose.model("Task", taskSchema);

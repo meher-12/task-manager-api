@@ -5,52 +5,54 @@ let cache = {
     timestamp: null
 };
 
-// Get all tasks with caching
+const clearCache = () => {
+    cache = { data: null, timestamp: null };
+};
+
+// GET ALL TASKS
 exports.getTasks = async (req, res) => {
     const now = Date.now();
 
     if (cache.data && (now - cache.timestamp < 60000)) {
-        return res.json({
-            source: "cache",
-            data: cache.data
-        });
+        return res.json({ source: "cache", data: cache.data });
     }
 
-    const tasks = await Task.find();
+    const tasks = await Task.find({ userId: req.user.id });
 
     cache = {
         data: tasks,
         timestamp: now
     };
 
-    res.json({
-        source: "db",
-        data: tasks
-    });
+    res.json({ source: "db", data: tasks });
 };
 
-// Clear cache helper
-const clearCache = () => {
-    cache = { data: null, timestamp: null };
-};
-
-// Create Task
+// CREATE TASK
 exports.createTask = async (req, res) => {
-    const task = await Task.create(req.body);
-    clearCache();   // ✅ invalidate cache
-    res.json(task);
+    const task = await Task.create({
+        ...req.body,
+        userId: req.user.id
+    });
+
+    clearCache();
+    res.status(201).json(task);
 };
 
-// Update Task
+// UPDATE TASK
 exports.updateTask = async (req, res) => {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const task = await Task.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+    );
+
     clearCache();
     res.json(task);
 };
-
-// Delete Task
+// DELETE TASK
 exports.deleteTask = async (req, res) => {
     await Task.findByIdAndDelete(req.params.id);
+
     clearCache();
     res.json({ message: "Deleted" });
 };
